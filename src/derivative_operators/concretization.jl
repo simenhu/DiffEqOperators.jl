@@ -13,7 +13,7 @@ function Base.copyto!(L::AbstractMatrix{T}, A::DerivativeOperator{T}, N::Int) wh
 
     coeff   = A.coefficients
     get_coeff = if coeff isa AbstractVector
-        i = get_coefficient(coeff, i)
+        i -> get_coefficient(coeff, i)
     elseif coeff isa Number
         i -> coeff
     else
