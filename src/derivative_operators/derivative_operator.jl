@@ -67,15 +67,25 @@ function CenteredDifference{N}(derivative_order::Int,
         )
 end
 
-struct StaggeredDifference{N} end
+struct LeftStaggeredDifference{N} end
 
-function StaggeredDifference{N}(derivative_order::Int, approximation_order::Int, dx::T, len::Int, coeff_func=nothing) where {T<:Real,N}
+function LeftStaggeredDifference{N}(derivative_order::Int, approximation_order::Int, dx::T, len::Int, coeff_func=nothing) where {T<:Real,N}
+    
     @assert approximation_order>1 "approximation_order must be greater than 1."
-    stencil_length          = derivative_order + approximation_order - 1 + (derivative_order+approximation_order)%2
-    boundary_stencil_length = derivative_order + approximation_order
-    dummy_x                 = -div(stencil_length,2) : div(stencil_length,2)
-    left_boundary_x         = 0:(boundary_stencil_length-1)
-    right_boundary_x        = reverse(-boundary_stencil_length+1:0)
+    #stencil_length          = derivative_order + approximation_order - 1 + (derivative_order+approximation_order)%2
+    stencil_length          = derivative_order + approximation_order - 1
+
+    #boundary_stencil_length = derivative_order + approximation_order
+    boundary_stencil_length = derivative_order + approximation_order - 1  #This may be wrong, assuming the same length of stencil at the boundaries as in the interiour points
+    #dummy_x                 = -div(stencil_length,2) : div(stencil_length,2)
+    dummy_x                 = (-div(stencil_length, 2) + 0.5):(div(stencil_length, 2) - 0.5)                       
+    
+    #left_boundary_x         = 0:(boundary_stencil_length-1)
+    left_boundary_x         = -1.5:(boundary_stencil_length - 2.5) # Ikke riktig, må finne verdien det skal slutte på , ikke hvor mange det skal være
+    right_boundary_x        = 0.5:-1:-(boundary_stencil_length - 1.5)
+
+    display(Array(left_boundary_x))
+    display(Array(right_boundary_x))
 
     boundary_point_count    = div(stencil_length,2) - 1 # -1 due to the ghost point
     # Because it's a N x (N+2) operator, the last stencil on the sides are the [b,0,x,x,x,x] stencils, not the [0,x,x,x,x,x] stencils, since we're never solving for the derivative at the boundary point.
