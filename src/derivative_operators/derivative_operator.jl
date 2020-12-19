@@ -120,7 +120,7 @@ function LeftStaggeredDifference{N}(derivative_order::Int, approximation_order::
 
     coefficients            = init_coefficients(coeff_func, len)
 
-    DerivativeOperator{T,N,false,T,typeof(stencil_coefs),
+    DerivativeOperator{T,N, true,T,typeof(stencil_coefs),
         typeof(low_boundary_coefs),typeof(coefficients),
         typeof(coeff_func)}(
         derivative_order, approximation_order, dx, len, stencil_length,
