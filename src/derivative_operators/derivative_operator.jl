@@ -77,30 +77,46 @@ function LeftStaggeredDifference{N}(derivative_order::Int, approximation_order::
 
     #boundary_stencil_length = derivative_order + approximation_order
     boundary_stencil_length = derivative_order + approximation_order - 1  #This may be wrong, assuming the same length of stencil at the boundaries as in the interiour points
-    #dummy_x                 = -div(stencil_length,2) : div(stencil_length,2)
     dummy_x                 = (-div(stencil_length, 2) + 0.5):(div(stencil_length, 2) - 0.5)                       
     
-    #left_boundary_x         = 0:(boundary_stencil_length-1)
-    left_boundary_x         = -1.5:(boundary_stencil_length - 2.5) # Ikke riktig, må finne verdien det skal slutte på , ikke hvor mange det skal være
-    right_boundary_x        = 0.5:-1:-(boundary_stencil_length - 1.5)
+    # I define the x_0 position of the boundary deriv spots with respect to the
+    # outermost internal node
+    left_boundary_x         = if boundary_stencil_length == 2 
+                                -0.5:0.5
+                            else                
+                                -1.5:(boundary_stencil_length - 2.5) 
+                            end
 
-    display(Array(left_boundary_x))
-    display(Array(right_boundary_x))
+    right_boundary_x        = -(boundary_stencil_length - 1.5):0.5
 
-    boundary_point_count    = div(stencil_length,2) - 1 # -1 due to the ghost point
+    left_boundary_point_count   = if boundary_stencil_length < 6 0
+                                else div(boundary_stencil_length, 2) - 2 # Different amount caused by staggered grid. Left boundary has fever boundary nodes than right side
+                                end
+
+    right_boundary_point_count  =  if boundary_stencil_length < 4 0
+                                else div(boundary_stencil_length, 2) - 1 
+                                end
+    
+    # Uses the boundary point cound which is biggest of the two. will in practice
+    # always be the right one
+
+    max_boundary_point_count = left_boundary_point_count + right_boundary_point_count
+    # max_boundary_point_count = 3
+
     # Because it's a N x (N+2) operator, the last stencil on the sides are the [b,0,x,x,x,x] stencils, not the [0,x,x,x,x,x] stencils, since we're never solving for the derivative at the boundary point.
-    deriv_spots             = (-div(stencil_length,2)+1) : -1  # unused
-    L_boundary_deriv_spots  = left_boundary_x[2:div(stencil_length,2)]
-    R_boundary_deriv_spots  = right_boundary_x[2:div(stencil_length,2)]
+    # Here the 
+    #L_boundary_deriv_spots  = left_boundary_x[2:div(stencil_length,2)]
+    L_boundary_deriv_spots  = 0:(left_boundary_point_count - 1)
+    R_boundary_deriv_spots  = -(right_boundary_point_count - 1):0 
 
     stencil_coefs           = convert(SVector{stencil_length, T}, (1/dx^derivative_order) * calculate_weights(derivative_order, zero(T), dummy_x))
+    
     _low_boundary_coefs     = SVector{boundary_stencil_length, T}[convert(SVector{boundary_stencil_length, T}, (1/dx^derivative_order) * calculate_weights(derivative_order, oneunit(T)*x0, left_boundary_x)) for x0 in L_boundary_deriv_spots]
-    low_boundary_coefs      = convert(SVector{boundary_point_count},_low_boundary_coefs)
+    low_boundary_coefs      = convert(SVector{left_boundary_point_count},_low_boundary_coefs)
 
-    # _high_boundary_coefs    = SVector{boundary_stencil_length, T}[convert(SVector{boundary_stencil_length, T}, (1/dx^derivative_order) * calculate_weights(derivative_order, oneunit(T)*x0, reverse(right_boundary_x))) for x0 in R_boundary_deriv_spots]
-    # high_boundary_coefs      = convert(SVector{boundary_point_count},reverse(_high_boundary_coefs))
+    _high_boundary_coefs    = SVector{boundary_stencil_length, T}[convert(SVector{boundary_stencil_length, T}, (1/dx^derivative_order) * calculate_weights(derivative_order, oneunit(T)*x0, right_boundary_x)) for x0 in R_boundary_deriv_spots]
+    high_boundary_coefs     = convert(SVector{right_boundary_point_count},_high_boundary_coefs)
 
-    high_boundary_coefs      = convert(SVector{boundary_point_count},reverse(map(reverse, _low_boundary_coefs*(-1)^derivative_order)))
 
     coefficients            = init_coefficients(coeff_func, len)
 
@@ -110,7 +126,7 @@ function LeftStaggeredDifference{N}(derivative_order::Int, approximation_order::
         derivative_order, approximation_order, dx, len, stencil_length,
         stencil_coefs,
         boundary_stencil_length,
-        boundary_point_count,
+        max_boundary_point_count,
         low_boundary_coefs,
         high_boundary_coefs,coefficients,coeff_func
         )
