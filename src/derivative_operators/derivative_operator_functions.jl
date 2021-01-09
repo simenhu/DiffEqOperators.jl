@@ -173,6 +173,66 @@ function *(c::AbstractVector{<:Number}, A::DerivativeOperator{T,N,Wind}) where {
         A.high_boundary_coefs,coefficients,A.coeff_func)
 end
 
+# function transpose(A::DerivativeOperator{T, N}) where {T<:Real, N}
+#     stencil_length = A.stencil_length
+#     derivative_order = A.derivative_order
+#     approximation_order = A.approximation_order
+#     dx = A.dx
+#     len = A.len
+
+#     stencil_coefs = SVector{stencil_length, T}(A.stencil_coefs[end:-1:1])
+#     boundary_stencil_length = A.boundary_point_count + A.boundary_stencil_length
+#     boundary_point_count = A.boundary_stencil_length # In the transposed DerivativeOperator the number of custom stencils is equal to the length of the custom stencils in the non-transposed operator
+
+#     # Low boundary coefficients
+#     _low_boundary_coefs = []
+#     for row in 1:boundary_point_count
+#         _boundary_stencil = zeros(T, boundary_stencil_length)
+#         for column in 1:boundary_stencil_length
+#             if column<=A.boundary_point_count
+#                 _boundary_stencil[column] = A.low_boundary_coefs[column][row]
+#             else
+
+#             end
+#         end
+#         push!(_low_boundary_coefs, convert(SVector{boundary_stencil_length, T}, _boundary_stencil))
+#     end
+#     low_boundary_coefs = convert(SVector{boundary_point_count}, _low_boundary_coefs)
+    
+
+#     # High boundary coefficients
+#     _high_boundary_coefs = []
+#     for row in 1:boundary_point_count
+#         _boundary_stencil = zeros(T, boundary_stencil_length)
+#         for column in 1:A.boundary_point_count
+#             _boundary_stencil[column] = A.low_boundary_coefs[column][row]
+#         end
+#         push!(_low_boundary_coefs, convert(SVector{boundary_stencil_length, T}, _boundary_stencil))
+#     end
+#     low_boundary_coefs = convert(SVector{boundary_point_count}, _low_boundary_coefs)
+
+
+#     # Has to wrap this function in a function that changes the indexes to mach the
+#     # indexes ofthe transposed operator
+    
+#     # coeff_func =  
+#     # coefficients = init_coefficients(coeff_func, len)
+    
+#     #=
+#     DerivativeOperator{T,N, false,T,typeof(stencil_coefs),
+#         typeof(low_boundary_coefs),typeof(coefficients),
+#         typeof(coeff_func)}(
+#         derivative_order, approximation_order, dx, len, stencil_length,
+#         stencil_coefs,
+#         boundary_stencil_length,
+#         boundary_point_count,
+#         low_boundary_coefs,
+#         high_boundary_coefs,coefficients,coeff_func
+#         )=#
+#     return stencil_coefs
+# end
+
+
 ###########################################
 
 # A more efficient mul! implementation for compositions of operators which may include regular-grid, centered difference,
@@ -665,3 +725,16 @@ function LinearAlgebra.mul!(x_temp::AbstractArray{T,3}, A::AbstractDiffEqComposi
         end
     end
 end
+
+
+######################################################################################################################
+
+# Custom adjoints for Derivative Operator
+
+# function rrule(::typeof(*), x)
+    
+#     function mutation_testing_pullback(ΔΏ)
+#         return (NO_FIELDS, x.*ΔΏ)
+#     end
+#     return mutation_testing(x), mutation_testing_pullback 
+#  end
