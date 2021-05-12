@@ -12,8 +12,25 @@ makedocs(
 
     pages=[
         "DiffEqOperators.jl: Linear operators for Scientific Machine Learning" => "index.md",
-        "Examples" => "examples.md"
-    ]
+        "Symbolic Tutorials" => [
+            "symbolic_tutorials/mol_heat.md"
+        ],
+        "Operator Tutorials" => [
+            "operator_tutorials/kdv.md"
+        ],
+        "Operators" => [
+            "operators/operator_overview.md",
+            "operators/derivative_operators.md",
+            "operators/jacobian_vector_product.md",
+            "operators/matrix_free_operators.md"
+        ],
+        "Symbolic PDE Solver" => [
+            "symbolic/molfinitedifference.md"
+        ],
+        "Nonlinear Derivatives" => [
+            "nonlinear_derivatives/nonlinear_diffusion.md"
+        ]  
+     ]
 )
 
 deploydocs(

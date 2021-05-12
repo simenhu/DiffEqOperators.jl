@@ -3,13 +3,16 @@ module DiffEqOperators
 import Base: +, -, *, /, \, size, getindex, setindex!, Matrix, convert, ==
 using DiffEqBase, StaticArrays, LinearAlgebra
 import LinearAlgebra: mul!, ldiv!, lmul!, rmul!, axpy!, opnorm, factorize, I
-import DiffEqBase: AbstractDiffEqLinearOperator, update_coefficients!, isconstant
+import DiffEqBase: update_coefficients!, isconstant
+using SciMLBase: AbstractDiffEqLinearOperator, AbstractDiffEqCompositeOperator, DiffEqScaledOperator
+import SciMLBase: getops
 using SparseArrays, ForwardDiff, BandedMatrices, NNlib, LazyArrays, BlockBandedMatrices
 using LazyBandedMatrices, ModelingToolkit
+using RuntimeGeneratedFunctions
+RuntimeGeneratedFunctions.init(@__MODULE__)
 
 abstract type AbstractDiffEqAffineOperator{T} end
 abstract type AbstractDerivativeOperator{T} <: AbstractDiffEqLinearOperator{T} end
-abstract type AbstractDiffEqCompositeOperator{T} <: AbstractDiffEqLinearOperator{T} end
 abstract type AbstractMatrixFreeOperator{T} <: AbstractDiffEqLinearOperator{T} end
 
 ### Matrix-free Operators
@@ -18,6 +21,9 @@ include("jacvec_operators.jl")
 
 ### Utilities
 include("utils.jl")
+
+### Exceptions
+include("exceptions.jl")
 
 ### Boundary Padded Arrays
 include("boundary_padded_arrays.jl")
@@ -37,13 +43,13 @@ include("derivative_operators/derivative_operator_functions.jl")
 
 ### Composite Operators
 include("composite_operators.jl")
-
-include("MOL_discretization.jl")
-
 include("docstrings.jl")
 
 ### Concretizations
 include("derivative_operators/concretization.jl")
+
+### MOL
+include("MOLFiniteDifference/MOL_discretization.jl")
 
 # The (u,p,t) and (du,u,p,t) interface
 for T in [DiffEqScaledOperator, DiffEqOperatorCombination, DiffEqOperatorComposition, GhostDerivativeOperator]
@@ -54,11 +60,13 @@ end
 export MatrixFreeOperator
 export AnalyticalJacVecOperator, JacVecOperator, getops
 export AbstractDerivativeOperator, DerivativeOperator,
-       CenteredDifference, UpwindDifference, LeftStaggeredDifference, RightStaggeredDifference
+       CenteredDifference, UpwindDifference, nonlinear_diffusion, nonlinear_diffusion!, LeftStaggeredDifference, RightStaggeredDifference
 export DirichletBC, Dirichlet0BC, NeumannBC, Neumann0BC, RobinBC, GeneralBC, MultiDimBC, PeriodicBC,
        MultiDimDirectionalBC, ComposedMultiDimBC, BoundaryPaddedVector
 export compose, decompose, perpsize
+export discretize, symbolic_discretize
 
 export GhostDerivativeOperator
-export MOLFiniteDifference
+export MOLFiniteDifference, center_align, edge_align
+export BoundaryConditionError
 end # module
