@@ -1,4 +1,3 @@
-using Infiltrator
 #
 # The types and constructors for derivative operators.
 #
@@ -90,7 +89,7 @@ function CenteredDifference{N}(derivative_order::Int,
 
     offside = 0
 
-    coefficients            = coeff_func isa Nothing ? nothing : fill!(Vector{T}(undef,len),0)
+    coefficients = init_coefficients(coeff_func, len)
 
     DerivativeOperator{T,N,false,T,typeof(stencil_coefs),
         typeof(low_boundary_coefs),typeof(high_boundary_coefs),typeof(coefficients),
@@ -143,7 +142,7 @@ function CenteredDifference{N}(derivative_order::Int,
 
     offside = 0
 
-    coefficients            = coeff_func isa Nothing ? nothing : zeros(T,len)
+    coefficients = init_coefficients(coeff_func, len)
 
     DerivativeOperator{T,N,false,typeof(dx),typeof(stencil_coefs),
         typeof(low_boundary_coefs),typeof(high_boundary_coefs),typeof(coefficients),
