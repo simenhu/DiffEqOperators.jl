@@ -563,3 +563,137 @@ function convolve_BC_right!(x_temp::AbstractVector{T}, _x::BoundaryPaddedVector,
         end
     end
 end
+
+#### Methods for efficient calculation of adjoints for derivative operators
+
+"""
+Method for non-allocation multiplication of the sort ΔΏ*_A', ideally mathcing the
+operation diag(ΔΏ*Array(A)') but avoiding allocating a full matrix
+"""
+function right_multiply_diag_transpose(x::AbstractArray, A::DerivativeOperator)
+    
+    M = size(x)[1]
+    N = size(x)[2]
+    diag_adjoint = zeros(M)
+    coeff = A.coefficients
+
+    # left special stencils
+    for m in 1:A.boundary_point_count #boundary stencils are always at the end
+        temp_var = 0.0
+        curr_coeff = get_coefficient(coeff, m)
+        stencil = A.low_boundary_coefs[m]
+
+        for i in 1:A.boundary_stencil_length
+            temp_var += curr_coeff*x[m, i]*stencil[i]
+        end
+
+        diag_adjoint[m] = temp_var
+    end
+
+
+    # right special stencils
+    for m in M-A.boundary_point_count+1:M
+        temp_var = 0.0
+        curr_coeff = get_coefficient(coeff, m)
+        # @infiltrate
+        coeff_index  = m + A.boundary_point_count - M 
+        stencil = A.high_boundary_coefs[coeff_index]
+
+        # Have to iterate through the last stencil positions in the x matrix
+        for i in 1:A.boundary_stencil_length
+            x_index = N-A.boundary_stencil_length+i
+            temp_var += curr_coeff*x[m, x_index]*stencil[i]
+        end
+        diag_adjoint[m] = temp_var
+    end
+
+
+    # main central stencil
+    stencil_offset = 0 # displace the stencil 1 step for each calculation
+    for m in A.boundary_point_count+1:M-A.boundary_point_count
+        temp_var = 0.0
+        curr_coeff = get_coefficient(coeff, m)
+        stencil = A.stencil_coefs
+        
+        for i in 1:A.stencil_length
+            temp_var += curr_coeff*x[m, i + stencil_offset]*stencil[i]
+        end
+
+        stencil_offset += 1
+        diag_adjoint[m] = temp_var
+    end
+
+    return diag_adjoint
+end
+
+"""
+Method for non-allocation multiplication of the sort A_sparse'*ΔΩ. (ΔΩ is a vecor) 
+"""
+function left_multiply_adjoint(A::DerivativeOperator, x::AbstractArray)
+    
+    M = length(x)
+    N = M + 2
+    coeff = A.coefficients
+    adjoint_product = zeros(N)
+
+    # upper special stencils
+    for n in 1:A.boundary_stencil_length
+        temp_var = 0.0
+
+        for m in 1:A.boundary_point_count+n
+            curr_coeff = get_coefficient(coeff, m)
+
+            if m <= A.boundary_point_count
+                stencil = A.low_boundary_coefs[m]
+                temp_var += curr_coeff*stencil[n]*x[m]
+            else
+                stencil = A.stencil_coefs
+                # Starts from the same index as row of A and then reduces with one
+                stencil_index = n - (m - A.boundary_point_count) + 1 # Think there should be + 1
+                # 1 - (3 - 2) + 1 = 1
+                # 2 - (3 - 2) + 1 = 2, 2 - (4 - 2) + 1 = 1
+                temp_var += curr_coeff*stencil[stencil_index]*x[m]
+            end
+        adjoint_product[n] = temp_var
+    end
+
+    # lower special stencils
+    start_m = M - A.boundary_point_count - A.boundary_stencil_length + 1
+    stencil_offset = 0
+
+    for n in N-A.boundary_stencil_length+1:N
+        temp_var = 0.0
+
+        # M - A.boundary_point_count - A.boundary_stencil_length + 1
+        for m in start_m + stencil_offset: M
+            if m < M - A.boundary_point_count + 1 # If m is outside the special stencilss
+                stencil_index = 
+        end
+
+        stencil_offset += 1
+
+    end
+    
+    # central stencils
+
+    stencil_offset = 0
+    start_m = A.boundary_point_count + 2 # Add two since we have one column with standard stencil that uses the boundary value
+    stencil = A.stencil_coefs
+
+    for n in A.boundary_stencil_length+1:N-A.boundary_stencil_length
+        temp_var = 0.0
+        
+        for i in 0:A.stencil_length - 1
+            # Calculating the m index of the matrix. Zero indexed to easily be used
+            # to gobackwards with the stencils
+            m = start_m + stencil_offset + i 
+            curr_coeff = get_coefficient(coeff, m)
+            temp_var += curr_coeff * stencil[A.stencil_length - i] * x[m]
+        end
+
+        stencil_offset += 1 # increases the offset of the center stencil once per iteration
+
+        adjoint_product[n] = temp_var
+    end 
+
+end
