@@ -60,7 +60,7 @@ end
 export MatrixFreeOperator
 export AnalyticalJacVecOperator, JacVecOperator, getops
 export AbstractDerivativeOperator, DerivativeOperator,
-       CenteredDifference, UpwindDifference, nonlinear_diffusion, nonlinear_diffusion!, LeftStaggeredDifference, RightStaggeredDifference, right_multiply_diag_transpose, left_multiply_adjoint
+       CenteredDifference, UpwindDifference, nonlinear_diffusion, nonlinear_diffusion!, LeftStaggeredDifference, RightStaggeredDifference, right_multiply_diag_transpose, left_multiply_adjoint, StaggeredDifference
 export DirichletBC, Dirichlet0BC, NeumannBC, Neumann0BC, RobinBC, GeneralBC, MultiDimBC, PeriodicBC,
        MultiDimDirectionalBC, ComposedMultiDimBC, BoundaryPaddedVector
 export compose, decompose, perpsize

@@ -626,7 +626,6 @@ function right_multiply_diag_transpose(x::AbstractArray, A::DerivativeOperator)
     return diag_adjoint
 end
 
-using Infiltrator
 
 """
 Method for non-allocation multiplication of the sort A_sparse'*ΔΩ. (ΔΩ is a vecor) 
